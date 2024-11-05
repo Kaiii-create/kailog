@@ -4,35 +4,43 @@ namespace Kai\Log;
 
 class Log
 {
-    private static string $logDirectory;
+    private static ?string $logDirectory = null;
     private static string $logLevel = 'info';
     private static int $maxFileSize = 2 * 1024 * 1024; // 2 MB
     private static string $logFileName = 'log.txt';
 
-    // 静态初始化，自动设置日志目录
-    public static function init(string $directory = null, string $level = 'info', int $maxFileSize = 2097152): void
+    /**
+     * 初始化日志设置
+     */
+    private static function initialize(): void
     {
-        // 设置默认日志目录
-        self::$logDirectory = $directory ?: (is_dir(__DIR__ . '/../logs') ? __DIR__ . '/../logs' : __DIR__ . '/../kailogs');
-        self::$logLevel = $level;
-        self::$maxFileSize = $maxFileSize;
+        if (self::$logDirectory === null) {
+            // 默认日志目录为 /logs 或 /kailogs，若不可写则使用系统临时目录
+            $defaultDirectory = __DIR__ . '/../logs';
+            self::$logDirectory = is_writable($defaultDirectory) ? $defaultDirectory : sys_get_temp_dir() . '/kailogs';
 
-        // 如果日志目录不存在，则创建
-        if (!is_dir(self::$logDirectory)) {
-            mkdir(self::$logDirectory, 0777, true);
+            if (!is_dir(self::$logDirectory)) {
+                mkdir(self::$logDirectory, 0777, true);
+            }
         }
     }
 
+    /**
+     * 写入日志
+     */
     public static function write(string $message, string $level = 'info'): void
     {
+        // 自动初始化（仅在首次调用时执行）
+        self::initialize();
+
         if (!self::isLogLevelAllowed($level)) {
             return;
         }
 
-        // 获取当前的日志文件路径
+        // 获取当前日志文件路径
         $logFile = self::getLogFilePath();
 
-        // 检查文件大小是否超过限制，若超出则生成新文件
+        // 文件大小超过限制时重命名文件
         if (file_exists($logFile) && filesize($logFile) >= self::$maxFileSize) {
             rename($logFile, self::$logDirectory . '/log_' . time() . '.txt');
         }
@@ -43,12 +51,18 @@ class Log
         file_put_contents($logFile, $formattedMessage, FILE_APPEND);
     }
 
+    /**
+     * 检查日志等级是否符合要求
+     */
     private static function isLogLevelAllowed(string $level): bool
     {
         $levels = ['info' => 0, 'warning' => 1, 'error' => 2];
         return $levels[$level] >= $levels[self::$logLevel];
     }
 
+    /**
+     * 获取日志文件路径
+     */
     private static function getLogFilePath(): string
     {
         return self::$logDirectory . '/' . self::$logFileName;
