@@ -22,9 +22,10 @@ class Log
             mkdir(self::$logDirectory, 0777, true);
         }
     }
-
+            
     public static function write(string $message, string $level = 'info'): void
     {
+        //
         if (!self::isLogLevelAllowed($level)) {
             return;
         }
