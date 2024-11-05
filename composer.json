@@ -1,0 +1,20 @@
+{
+    "name": "kai/log",
+    "description": "A custom logging package with static methods",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kai",
+            "email": "877166291@qq.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Kai\\Log\\": "src/"
+        }
+    },
+    "require": {
+        "php": ">=8.0"
+    }
+}
