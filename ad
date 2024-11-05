@@ -1,0 +1,69 @@
+[1mdiff --git a/src/Log.php b/src/Log.php[m
+[1mindex 5b0c059..3e04e39 100644[m
+[1m--- a/src/Log.php[m
+[1m+++ b/src/Log.php[m
+[36m@@ -4,16 +4,20 @@[m [mnamespace Kai\Log;[m
+ [m
+ class Log[m
+ {[m
+[31m-    private static string $logDirectory = __DIR__ . '/../logs';[m
+[32m+[m[32m    private static string $logDirectory;[m
+     private static string $logLevel = 'info';[m
+[31m-    private static int $maxFileSize = 2 * 1024 * 1024;[m
+[32m+[m[32m    private static int $maxFileSize = 2 * 1024 * 1024; // 2 MB[m
+[32m+[m[32m    private static string $logFileName = 'log.txt';[m
+ [m
+[31m-    public static function init(string $directory, string $level = 'info', int $maxFileSize = 2097152): void[m
+[32m+[m[32m    // 静态初始化，自动设置日志目录[m
+[32m+[m[32m    public static function init(string $directory = null, string $level = 'info', int $maxFileSize = 2097152): void[m
+     {[m
+[31m-        self::$logDirectory = $directory;[m
+[32m+[m[32m        // 设置默认日志目录[m
+[32m+[m[32m        self::$logDirectory = $directory ?: (is_dir(__DIR__ . '/../logs') ? __DIR__ . '/../logs' : __DIR__ . '/../kailogs');[m
+         self::$logLevel = $level;[m
+         self::$maxFileSize = $maxFileSize;[m
+ [m
+[32m+[m[32m        // 如果日志目录不存在，则创建[m
+         if (!is_dir(self::$logDirectory)) {[m
+             mkdir(self::$logDirectory, 0777, true);[m
+         }[m
+[36m@@ -25,15 +29,17 @@[m [mclass Log[m
+             return;[m
+         }[m
+ [m
+[32m+[m[32m        // 获取当前的日志文件路径[m
+         $logFile = self::getLogFilePath();[m
+ [m
+[32m+[m[32m        // 检查文件大小是否超过限制，若超出则生成新文件[m
+         if (file_exists($logFile) && filesize($logFile) >= self::$maxFileSize) {[m
+[31m-            $logFile = self::getLogFilePath(true);[m
+[32m+[m[32m            rename($logFile, self::$logDirectory . '/log_' . time() . '.txt');[m
+         }[m
+ [m
+[32m+[m[32m        // 格式化日志内容并写入[m
+         $date = date('Y-m-d H:i:s');[m
+         $formattedMessage = "[$date] [$level] $message" . PHP_EOL;[m
+[31m-[m
+         file_put_contents($logFile, $formattedMessage, FILE_APPEND);[m
+     }[m
+ [m
+[36m@@ -43,15 +49,8 @@[m [mclass Log[m
+         return $levels[$level] >= $levels[self::$logLevel];[m
+     }[m
+ [m
+[31m-    private static function getLogFilePath(bool $isNewFile = false): string[m
+[32m+[m[32m    private static function getLogFilePath(): string[m
+     {[m
+[31m-        $date = date('Y-m-d');[m
+[31m-        $filePath = self::$logDirectory . "/log-{$date}.log";[m
+[31m-[m
+[31m-        if ($isNewFile) {[m
+[31m-            $filePath = self::$logDirectory . "/log-{$date}-" . time() . ".log";[m
+[31m-        }[m
+[31m-[m
+[31m-        return $filePath;[m
+[32m+[m[32m        return self::$logDirectory . '/' . self::$logFileName;[m
+     }[m
+[31m-}[m
+[32m+[m[32m}[m
+\ No newline at end of file[m
