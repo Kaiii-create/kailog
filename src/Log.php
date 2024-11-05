@@ -4,24 +4,23 @@ namespace Kai\Log;
 
 class Log
 {
-    private static ?string $logDirectory = null;
+    private static string $logDirectory = __DIR__ . '/../logs';
     private static string $logLevel = 'info';
     private static int $maxFileSize = 2 * 1024 * 1024; // 2 MB
-    private static string $logFileName = 'log.log';
+    private static string $logFileName = 'log.log'; // 默认日志文件名
 
     /**
      * 初始化日志设置
      */
-    private static function initialize(): void
+    public static function init(string $directory, string $level = 'info', int $maxFileSize = 2097152): void
     {
-        if (self::$logDirectory === null) {
-            // 默认日志目录为 /logs 或 /kailogs，若不可写则使用系统临时目录
-            $defaultDirectory = __DIR__ . '/../logs';
-            self::$logDirectory = is_writable($defaultDirectory) ? $defaultDirectory : sys_get_temp_dir() . '/kailogs';
+        self::$logDirectory = $directory;
+        self::$logLevel = $level;
+        self::$maxFileSize = $maxFileSize;
 
-            if (!is_dir(self::$logDirectory)) {
-                mkdir(self::$logDirectory, 0777, true);
-            }
+        // 创建日志目录（如果不存在）
+        if (!is_dir(self::$logDirectory)) {
+            mkdir(self::$logDirectory, 0777, true);
         }
     }
 
@@ -30,9 +29,7 @@ class Log
      */
     public static function write(string $message, string $level = 'info'): void
     {
-        // 自动初始化（仅在首次调用时执行）
-        self::initialize();
-
+        // 检查日志级别是否符合要求
         if (!self::isLogLevelAllowed($level)) {
             return;
         }
@@ -40,9 +37,10 @@ class Log
         // 获取当前日志文件路径
         $logFile = self::getLogFilePath();
 
-        // 文件大小超过限制时重命名文件
+        // 如果文件超过指定大小，则重命名文件
         if (file_exists($logFile) && filesize($logFile) >= self::$maxFileSize) {
-            rename($logFile, self::$logDirectory . '/log_' . time() . '.log');
+            $newFileName = self::$logDirectory . '/log_' . time() . '.log';
+            rename($logFile, $newFileName);
         }
 
         // 格式化日志内容并写入
