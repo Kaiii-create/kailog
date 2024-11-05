@@ -7,7 +7,7 @@ class Log
     private static ?string $logDirectory = null;
     private static string $logLevel = 'info';
     private static int $maxFileSize = 2 * 1024 * 1024; // 2 MB
-    private static string $logFileName = 'log.txt';
+    private static string $logFileName = 'log.log';
 
     /**
      * 初始化日志设置
@@ -42,7 +42,7 @@ class Log
 
         // 文件大小超过限制时重命名文件
         if (file_exists($logFile) && filesize($logFile) >= self::$maxFileSize) {
-            rename($logFile, self::$logDirectory . '/log_' . time() . '.txt');
+            rename($logFile, self::$logDirectory . '/log_' . time() . '.log');
         }
 
         // 格式化日志内容并写入
